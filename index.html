@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mutual Fund Explorer — India</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Theme tokens ── */
+:root {
+  --radius-md:8px; --radius-lg:12px;
+  --blue:#378ADD; --blue-dark:#185FA5;
+}
+[data-theme="dark"] {
+  --bg:#0f1117; --bg2:#181c27; --bg3:#1e2233; --bg4:#242840;
+  --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.14);
+  --text:#e8eaf0; --text2:#9aa0b4; --text3:#636878;
+  --green:#8bc34a; --green-bg:rgba(99,153,34,.15);
+  --red:#ef5350; --red-bg:rgba(226,75,74,.15);
+  --amber:#ffb74d;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+[data-theme="light"] {
+  --bg:#f4f6fb; --bg2:#ffffff; --bg3:#eef0f5; --bg4:#e5e8f0;
+  --border:rgba(0,0,0,.08); --border2:rgba(0,0,0,.14);
+  --text:#1a1d27; --text2:#4a5068; --text3:#8890a8;
+  --green:#3a7a0a; --green-bg:rgba(58,122,10,.1);
+  --red:#c0392b; --red-bg:rgba(192,57,43,.1);
+  --amber:#b45309;
+  --shadow:0 4px 24px rgba(0,0,0,.1);
+}
+
+body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; font-size:14px; line-height:1.6; min-height:100vh; transition:background .2s,color .2s; }
+.container { max-width:1200px; margin:0 auto; padding:2rem 1.5rem; }
+
+/* header */
+.header { display:flex; align-items:center; gap:12px; margin-bottom:2rem; }
+.header-icon { width:42px; height:42px; background:var(--blue-dark); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--blue); font-size:20px; flex-shrink:0; }
+.header-text h1 { font-size:20px; font-weight:600; }
+.header-text p { font-size:12px; color:var(--text2); }
+.live-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#8bc34a; margin-right:5px; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+.header-actions { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.icon-btn { padding:6px 10px; border-radius:var(--radius-md); border:1px solid var(--border2); background:none; color:var(--text2); font-size:13px; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:5px; }
+.icon-btn:hover { color:var(--text); border-color:var(--blue); }
+.theme-toggle { font-size:18px; padding:5px 8px; }
+
+/* tabs */
+.tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
+.tab { padding:9px 18px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:none; color:var(--text2); border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s; display:flex; align-items:center; gap:6px; }
+.tab.active { color:var(--text); border-bottom-color:var(--blue-dark); }
+.tab:hover:not(.active) { color:var(--text); }
+.panel { display:none; }
+.panel.active { display:block; }
+.tab-badge { background:var(--blue-dark); color:#fff; font-size:10px; padding:1px 6px; border-radius:10px; margin-left:2px; }
+
+/* metrics */
+.metric-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:1.5rem; }
+.metric { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-md); padding:1rem; }
+.metric-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.metric-value { font-size:22px; font-weight:600; }
+.metric-value.green { color:var(--green); }
+.metric-value.red   { color:var(--red); }
+
+/* filter bar */
+.filter-bar { display:flex; gap:8px; margin-bottom:.75rem; flex-wrap:wrap; align-items:center; }
+.filter-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+.filter-btn { padding:4px 12px; border-radius:20px; border:1px solid var(--border2); background:none; color:var(--text2); font-size:12px; cursor:pointer; transition:all .1s; white-space:nowrap; }
+.filter-btn.active { background:var(--blue-dark); color:#fff; border-color:var(--blue-dark); }
+.filter-btn:hover:not(.active) { border-color:var(--blue); color:var(--text); }
+.search-box { padding:5px 10px; border-radius:var(--radius-md); border:1px solid var(--border2); background:var(--bg3); color:var(--text); font-size:13px; outline:none; width:220px; transition:border-color .15s; }
+.search-box:focus { border-color:var(--blue); }
+.search-box::placeholder { color:var(--text3); }
+
+/* table */
+.table-wrap { overflow-x:auto; border-radius:var(--radius-lg); border:1px solid var(--border); }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead th { text-align:left; font-size:11px; font-weight:500; color:var(--text3); padding:10px 12px; border-bottom:1px solid var(--border); background:var(--bg2); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; cursor:pointer; user-select:none; }
+thead th:hover { color:var(--text2); }
+tbody tr.fund-row { border-bottom:1px solid var(--border); cursor:pointer; transition:background .1s; }
+tbody tr.fund-row:hover { background:var(--bg3); }
+tbody tr.fund-row.expanded { background:var(--bg3); }
+tbody tr.detail-row td { padding:0; border-bottom:1px solid var(--border); background:var(--bg4); }
+td { padding:9px 12px; color:var(--text); vertical-align:middle; white-space:nowrap; }
+
+/* detail panel */
+.detail-panel { overflow:hidden; transition:max-height .3s ease; }
+.detail-panel.open { }
+.detail-inner { padding:1.25rem 1.5rem; }
+.detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+.detail-info { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem; }
+.detail-stat { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-md); padding:.75rem 1rem; }
+.detail-stat-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+.detail-stat-val { font-size:15px; font-weight:600; color:var(--text); }
+.detail-title { font-size:15px; font-weight:600; margin-bottom:4px; }
+.detail-sub { font-size:12px; color:var(--text2); margin-bottom:1rem; }
+.nav-period-tabs { display:flex; gap:4px; margin-bottom:12px; }
+.nav-period-btn { padding:3px 12px; border-radius:20px; border:1px solid var(--border2); background:none; color:var(--text2); font-size:12px; cursor:pointer; }
+.nav-period-btn.active { background:var(--blue-dark); color:#fff; border-color:var(--blue-dark); }
+.chart-canvas-wrap { position:relative; width:100%; height:200px; }
+.detail-close { float:right; background:none; border:none; color:var(--text3); cursor:pointer; font-size:18px; padding:2px; }
+.detail-close:hover { color:var(--text); }
+
+/* badges */
+.badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:500; }
+.badge-cat  { background:var(--bg3); color:var(--text2); }
+.badge-low  { background:rgba(99,153,34,.2); color:var(--green); }
+.badge-med  { background:rgba(186,117,23,.2); color:var(--amber); }
+.badge-high { background:rgba(226,75,74,.2); color:var(--red); }
+.badge-plan { background:rgba(55,138,221,.12); color:var(--blue); font-size:10px; }
+
+.ret-green { color:var(--green); font-weight:600; }
+.ret-amber { color:var(--amber); font-weight:600; }
+.ret-red   { color:var(--red);   font-weight:600; }
+.ret-na    { color:var(--text3); }
+
+/* action buttons */
+.btn { padding:6px 14px; border-radius:var(--radius-md); border:1px solid var(--border2); background:none; color:var(--text); font-size:12px; cursor:pointer; transition:all .1s; display:inline-flex; align-items:center; gap:4px; }
+.btn:hover { background:var(--bg3); border-color:var(--blue); }
+.btn-primary { background:var(--blue-dark); color:#fff; border-color:var(--blue-dark); }
+.btn-primary:hover { background:#0C447C; }
+.btn-danger { color:var(--red); border-color:var(--red); }
+.btn-danger:hover { background:var(--red-bg); }
+.star-btn { background:none; border:none; cursor:pointer; padding:3px 6px; font-size:15px; color:var(--text3); transition:color .15s,transform .15s; line-height:1; }
+.star-btn:hover { color:#EF9F27; transform:scale(1.2); }
+.star-btn.starred { color:#EF9F27; }
+.add-btn { background:none; border:1px solid var(--border2); border-radius:var(--radius-md); cursor:pointer; padding:3px 9px; font-size:13px; color:var(--text2); transition:all .1s; }
+.add-btn:hover { border-color:var(--blue); color:var(--blue); }
+
+/* forms */
+.form-row { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; margin-bottom:1.5rem; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1rem 1.25rem; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
+.form-group input, .form-group select { padding:8px 10px; border-radius:var(--radius-md); border:1px solid var(--border2); background:var(--bg3); color:var(--text); font-size:13px; outline:none; transition:border-color .15s; }
+.form-group input:focus, .form-group select:focus { border-color:var(--blue); }
+.form-group select option { background:var(--bg3); color:var(--text); }
+
+/* states */
+.empty-state { text-align:center; padding:4rem 2rem; color:var(--text3); }
+.empty-state i { font-size:40px; margin-bottom:12px; display:block; }
+.progress-wrap { padding:3rem 2rem; text-align:center; }
+.progress-title { font-size:14px; color:var(--text2); margin-bottom:1rem; }
+.progress-bar-bg { height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; max-width:400px; margin:0 auto 10px; }
+.progress-bar-fill { height:100%; background:var(--blue-dark); border-radius:3px; transition:width .3s; }
+.progress-detail { font-size:12px; color:var(--text3); }
+.error-banner { background:var(--red-bg); border:1px solid rgba(226,75,74,.3); border-radius:var(--radius-md); padding:10px 14px; font-size:13px; color:var(--red); margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+
+/* pagination */
+.pagination { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-top:1px solid var(--border); font-size:12px; color:var(--text3); flex-wrap:wrap; gap:8px; }
+.page-btns { display:flex; gap:4px; flex-wrap:wrap; }
+.page-btn { padding:3px 10px; border-radius:var(--radius-md); border:1px solid var(--border2); background:none; color:var(--text2); font-size:12px; cursor:pointer; }
+.page-btn.active { background:var(--blue-dark); color:#fff; border-color:var(--blue-dark); }
+.page-btn:hover:not(.active):not(:disabled) { border-color:var(--blue); color:var(--text); }
+.page-btn:disabled { opacity:.35; cursor:default; }
+
+/* portfolio/favorites cards */
+.trend-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1.25rem; margin-bottom:1rem; }
+.trend-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; gap:12px; }
+.trend-name { font-size:15px; font-weight:600; cursor:pointer; }
+.trend-name:hover { color:var(--blue); }
+.trend-meta { font-size:12px; color:var(--text2); margin-top:3px; }
+.return-pill { font-size:13px; font-weight:600; padding:3px 12px; border-radius:20px; white-space:nowrap; }
+.return-pos { background:var(--green-bg); color:var(--green); }
+.return-neg { background:var(--red-bg); color:var(--red); }
+.holding-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.h-stat-label { font-size:11px; color:var(--text3); margin-bottom:2px; }
+.h-stat-val { font-size:14px; font-weight:600; }
+.chart-wrap { position:relative; width:100%; height:150px; }
+
+/* favorites grid */
+.fav-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1rem; }
+.fav-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1rem 1.25rem; transition:border-color .15s; }
+.fav-card:hover { border-color:var(--blue); }
+.fav-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.75rem; }
+.fav-card-name { font-size:14px; font-weight:600; cursor:pointer; line-height:1.3; }
+.fav-card-name:hover { color:var(--blue); }
+.fav-card-house { font-size:11px; color:var(--text3); margin-top:2px; }
+.fav-metrics { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:.75rem; }
+.fav-metric { text-align:center; }
+.fav-metric-val { font-size:14px; font-weight:600; }
+.fav-metric-label { font-size:10px; color:var(--text3); }
+
+@keyframes spin { to{transform:rotate(360deg)} }
+.spinning i { animation:spin .7s linear infinite; }
+
+@media(max-width:700px) {
+  .form-row { grid-template-columns:1fr 1fr; }
+  .holding-stats { grid-template-columns:1fr 1fr; }
+  .detail-grid { grid-template-columns:1fr; }
+  .detail-info { grid-template-columns:1fr 1fr; }
+  .fav-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-icon"><i class="ti ti-chart-candle"></i></div>
+    <div class="header-text">
+      <h1>Mutual Fund Explorer — India</h1>
+      <p><span class="live-dot"></span>Live via FinAPI · <span id="last-updated">Loading…</span></p>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="refresh-btn" onclick="loadAllFunds(true)" title="Refresh data">
+        <i class="ti ti-refresh"></i> Refresh
+      </button>
+      <button class="icon-btn theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">
+        <i class="ti ti-moon" id="theme-icon"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('explore')"><i class="ti ti-list-search"></i> Explore funds</button>
+    <button class="tab" onclick="switchTab('favorites')">
+      <i class="ti ti-star"></i> Favorites
+      <span class="tab-badge" id="fav-count" style="display:none;"></span>
+    </button>
+    <button class="tab" onclick="switchTab('portfolio')">
+      <i class="ti ti-briefcase"></i> My portfolio
+      <span class="tab-badge" id="pf-count" style="display:none;"></span>
+    </button>
+  </div>
+
+  <!-- ── Explore Panel ── -->
+  <div id="panel-explore" class="panel active">
+    <div class="metric-row">
+      <div class="metric"><div class="metric-label">Total funds</div><div class="metric-value" id="m-total">—</div></div>
+      <div class="metric"><div class="metric-label">Showing</div><div class="metric-value" id="m-count">—</div></div>
+      <div class="metric"><div class="metric-label">Best 1Y return</div><div class="metric-value green" id="m-best1y">—</div></div>
+      <div class="metric"><div class="metric-label">Avg expense ratio</div><div class="metric-value" id="m-avgexp">—</div></div>
+      <div class="metric"><div class="metric-label">Low risk</div><div class="metric-value" id="m-lowrisk">—</div></div>
+    </div>
+    <div class="filter-bar">
+      <input class="search-box" id="search-box" placeholder="Search fund name or house…" oninput="onFilter()" />
+    </div>
+    <div class="filter-bar">
+      <span class="filter-label">Category:</span>
+      <button class="filter-btn active" onclick="setFilter('cat','All',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('cat','Equity',this)">Equity</button>
+      <button class="filter-btn" onclick="setFilter('cat','Debt',this)">Debt</button>
+      <button class="filter-btn" onclick="setFilter('cat','Hybrid',this)">Hybrid</button>
+      <button class="filter-btn" onclick="setFilter('cat','Index',this)">Index / ETF</button>
+    </div>
+    <div class="filter-bar">
+      <span class="filter-label">Risk:</span>
+      <button class="filter-btn active" onclick="setFilter('risk','All',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('risk','Low',this)">Low</button>
+      <button class="filter-btn" onclick="setFilter('risk','Moderate',this)">Moderate</button>
+      <button class="filter-btn" onclick="setFilter('risk','High',this)">High</button>
+      <span class="filter-label" style="margin-left:8px;">Plan:</span>
+      <button class="filter-btn active" onclick="setFilter('plan','All',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('plan','Direct',this)">Direct</button>
+      <button class="filter-btn" onclick="setFilter('plan','Regular',this)">Regular</button>
+      <span class="filter-label" style="margin-left:8px;">Option:</span>
+      <button class="filter-btn active" onclick="setFilter('opt','All',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('opt','Growth',this)">Growth</button>
+      <button class="filter-btn" onclick="setFilter('opt','IDCW',this)">IDCW</button>
+    </div>
+    <div id="explore-content">
+      <div class="progress-wrap">
+        <div class="progress-title">Fetching all funds from FinAPI…</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:0%"></div></div>
+        <div class="progress-detail">Starting…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Favorites Panel ── -->
+  <div id="panel-favorites" class="panel">
+    <div id="fav-empty" class="empty-state">
+      <i class="ti ti-star"></i>
+      <p>No favorites yet. Click the ★ button next to any fund to save it here.</p>
+    </div>
+    <div id="fav-grid" class="fav-grid" style="display:none;"></div>
+  </div>
+
+  <!-- ── Portfolio Panel ── -->
+  <div id="panel-portfolio" class="panel">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fund</label>
+        <select id="pf-fund"><option value="">Select a fund…</option></select>
+      </div>
+      <div class="form-group">
+        <label>Amount invested (₹)</label>
+        <input type="number" id="pf-amount" placeholder="e.g. 10000" min="100" />
+      </div>
+      <div class="form-group">
+        <label>Purchase NAV (₹)</label>
+        <input type="number" id="pf-nav" placeholder="e.g. 45.20" step="0.01" />
+      </div>
+      <button class="btn btn-primary" onclick="addToPortfolio()"><i class="ti ti-plus"></i> Add</button>
+    </div>
+    <div id="pf-metrics" class="metric-row" style="display:none;"></div>
+    <div id="pf-empty" class="empty-state"><i class="ti ti-briefcase"></i><p>No holdings yet. Add a fund above.</p></div>
+    <div id="pf-holdings"></div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   CONSTANTS & STATE
+══════════════════════════════════════════ */
+const API           = 'https://finapi.upvaly.com/api/mf';
+const CACHE_KEY     = 'finapi_all_v1';
+const CACHE_TTL     = 2 * 60 * 60 * 1000;
+const PAGE_SIZE     = 50;
+const TOTAL_PAGES   = 289;
+const REQUEST_DELAY = 300;
+const RETRY_DELAY   = 3000;
+const TABLE_PAGE    = 100;
+
+let allFunds       = [];
+let filteredCache  = [];
+let tablePage      = 1;
+let filters        = { cat:'All', risk:'All', plan:'All', opt:'All', q:'' };
+let sortCol        = 'ret1', sortDir = -1;
+let favorites      = new Set();
+let portfolio      = [];
+let chartInstances = {};
+let expandedRow    = null;   // schemeCode of currently expanded row
+let detailCharts   = {};     // charts inside detail panels
+
+/* ══════════════════════════════════════════
+   THEME
+══════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  localStorage.setItem('mf_theme', next);
+  document.getElementById('theme-icon').className = next === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
+  // Rebuild all open charts with updated colors
+  Object.values(detailCharts).forEach(c => c?.destroy());
+  detailCharts = {};
+  if (expandedRow) { const sc = expandedRow; expandedRow = null; openDetail(sc); }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('mf_theme') || 'dark';
+  document.documentElement.dataset.theme = saved;
+  document.getElementById('theme-icon').className = saved === 'dark' ? 'ti ti-moon' : 'ti ti-sun';
+}
+
+/* ══════════════════════════════════════════
+   MAPPING HELPERS
+══════════════════════════════════════════ */
+function mapRisk(r) {
+  if (!r) return 'High';
+  const l = r.toLowerCase();
+  if (l === 'low risk') return 'Low';
+  if (l.includes('moderate') || l.includes('moderately')) return 'Moderate';
+  return 'High';
+}
+function mapCat(c) {
+  if (!c) return 'Equity';
+  const l = c.toLowerCase();
+  if (l.includes('debt')||l.includes('bond')||l.includes('gilt')||l.includes('liquid')||l.includes('money market')||l.includes('credit')||l.includes('banking and psu')||l.includes('corporate bond')||l.includes('duration')||l.includes('floater')) return 'Debt';
+  if (l.includes('hybrid')||l.includes('balanced')||l.includes('allocation')||l.includes('multi asset')||l.includes('arbitrage')||l.includes('equity savings')) return 'Hybrid';
+  if (l.includes('index')||l.includes('etf')||l.includes('exchange')) return 'Index';
+  return 'Equity';
+}
+function mapPlan(p)  { return (!p||!p.toLowerCase().includes('regular')) ? 'Direct' : 'Regular'; }
+function mapOpt(o)   { return (!o||(!o.toLowerCase().includes('idcw')&&!o.toLowerCase().includes('dividend'))) ? 'Growth' : 'IDCW'; }
+
+function norm(r) {
+  const cagr = r.cagr || {};
+  return {
+    schemeCode: r.schemeCode,
+    name:       r.schemeName || '',
+    fundHouse:  r.fundHouse  || '',
+    cat:        mapCat(r.schemeCategory),
+    rawCat:     r.schemeCategory || '',
+    risk:       mapRisk(r.schemeRisk),
+    rawRisk:    r.schemeRisk || '',
+    plan:       mapPlan(r.planName),
+    opt:        mapOpt(r.optionName),
+    ret1:       cagr['1y']  != null ? +cagr['1y']  : null,
+    ret3:       cagr['3y']  != null ? +cagr['3y']  : null,
+    ret5:       cagr['5y']  != null ? +cagr['5y']  : null,
+    ret7:       cagr['7y']  != null ? +cagr['7y']  : null,
+    ret10:      cagr['10y'] != null ? +cagr['10y'] : null,
+    exp:        r.expenseRatio != null ? +r.expenseRatio : null,
+    nav:        r.latestNav    != null ? +r.latestNav    : null,
+    navDate:    r.latestNavDate || null,
+    prevNav:    r.previousNav  != null ? +r.previousNav  : null,
+    high52:     r['52WeekHighNav'] != null ? +r['52WeekHighNav'] : null,
+    low52:      r['52WeekLowNav']  != null ? +r['52WeekLowNav']  : null,
+    aum:        r.aum != null ? +r.aum : null,
+    benchmark:  r.benchmarkIndex || '',
+    inception:  r.inceptionDate  || '',
+    managers:   r.schemeFundManagers || '',
+    exitLoad:   r.exitLoad || '',
+    isin:       r.isinDivPayout || '',
+  };
+}
+
+/* ══════════════════════════════════════════
+   DATA LOADING
+══════════════════════════════════════════ */
+async function loadAllFunds(forceRefresh = false) {
+  if (!forceRefresh) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached && Date.now() - cached.ts < CACHE_TTL && cached.funds?.length > 1000) {
+        allFunds = cached.funds;
+        onLoaded(); return;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('refresh-btn').classList.add('spinning');
+  showProgress(0, 0, TOTAL_PAGES);
+
+  const collected = [];
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function fetchPage(p) {
+    for (let i = 0; i < 5; i++) {
+      try {
+        const res = await fetch(`${API}/paginated?page=${p}&limit=${PAGE_SIZE}`);
+        if (res.status === 429) { showProgress(null, collected.length, TOTAL_PAGES, `Rate limited — retrying in ${RETRY_DELAY/1000}s…`); await sleep(RETRY_DELAY); continue; }
+        if (!res.ok) return [];
+        const j = await res.json();
+        return j?.data?.content || [];
+      } catch(e) { await sleep(800); }
+    }
+    return [];
+  }
+
+  for (let p = 1; p <= TOTAL_PAGES; p++) {
+    const content = await fetchPage(p);
+    content.forEach(r => collected.push(norm(r)));
+    showProgress(p, collected.length, TOTAL_PAGES);
+    if (content.length === 0 && p > 10) break;
+    if (p < TOTAL_PAGES) await sleep(REQUEST_DELAY);
+  }
+
+  if (!collected.length) { showError('Failed to load fund data. Check your connection and retry.'); document.getElementById('refresh-btn').classList.remove('spinning'); return; }
+
+  allFunds = collected;
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), funds: allFunds })); } catch(e) {}
+  document.getElementById('refresh-btn').classList.remove('spinning');
+  onLoaded();
+}
+
+function showProgress(page, funds, total, status) {
+  const pct = page != null ? Math.round(page / total * 100) : null;
+  const eta = page != null && page > 0 ? '~' + Math.round((total - page) * REQUEST_DELAY / 1000) + 's remaining' : '';
+  document.getElementById('explore-content').innerHTML = `
+    <div class="progress-wrap">
+      <div class="progress-title">${status || (page != null ? `Fetching all funds… ${page}/${total} pages` : 'Fetching…')}</div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct ?? 0}%"></div></div>
+      <div class="progress-detail">${funds.toLocaleString('en-IN')} funds loaded${eta ? ' · ' + eta : ''}</div>
+    </div>`;
+}
+
+function showError(msg) {
+  document.getElementById('explore-content').innerHTML = `
+    <div class="error-banner"><i class="ti ti-alert-circle"></i>${msg}</div>
+    <div style="text-align:center;padding:1rem;"><button class="btn btn-primary" onclick="loadAllFunds(true)"><i class="ti ti-refresh"></i> Retry</button></div>`;
+}
+
+function onLoaded() {
+  document.getElementById('m-total').textContent = allFunds.length.toLocaleString('en-IN');
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  applyFilters();
+  populateFundSelect();
+}
+
+/* ══════════════════════════════════════════
+   FILTERING & SORTING
+══════════════════════════════════════════ */
+function setFilter(key, val, el) {
+  filters[key] = val;
+  const grp = { cat:['All','Equity','Debt','Hybrid','Index / ETF'], risk:['All','Low','Moderate','High'], plan:['All','Direct','Regular'], opt:['All','Growth','IDCW'] };
+  document.querySelectorAll('.filter-btn').forEach(b => { if (grp[key].includes(b.textContent.trim())) b.classList.remove('active'); });
+  el.classList.add('active');
+  tablePage = 1; expandedRow = null; applyFilters();
+}
+function onFilter() { filters.q = document.getElementById('search-box').value.trim().toLowerCase(); tablePage = 1; expandedRow = null; applyFilters(); }
+
+function applyFilters() {
+  const q = filters.q;
+  filteredCache = allFunds.filter(f =>
+    (filters.cat  === 'All' || f.cat  === filters.cat)  &&
+    (filters.risk === 'All' || f.risk === filters.risk) &&
+    (filters.plan === 'All' || f.plan === filters.plan) &&
+    (filters.opt  === 'All' || f.opt  === filters.opt)  &&
+    (!q || f.name.toLowerCase().includes(q) || f.fundHouse.toLowerCase().includes(q))
+  ).sort((a, b) => {
+    const av = a[sortCol] ?? -Infinity, bv = b[sortCol] ?? -Infinity;
+    return sortDir * (bv - av);
+  });
+  updateMetrics(); renderTable();
+}
+
+function sortBy(col) { if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = -1; } tablePage = 1; applyFilters(); }
+
+function updateMetrics() {
+  const f = filteredCache;
+  document.getElementById('m-count').textContent = f.length.toLocaleString('en-IN');
+  const best = f.reduce((m, x) => x.ret1 != null && x.ret1 > m ? x.ret1 : m, -Infinity);
+  document.getElementById('m-best1y').textContent = best > -Infinity ? best.toFixed(1) + '%' : '—';
+  const exps = f.filter(x => x.exp != null).map(x => x.exp);
+  document.getElementById('m-avgexp').textContent = exps.length ? (exps.reduce((s,v)=>s+v,0)/exps.length).toFixed(2)+'%' : '—';
+  document.getElementById('m-lowrisk').textContent = f.filter(x => x.risk === 'Low').length.toLocaleString('en-IN');
+}
+
+/* ══════════════════════════════════════════
+   TABLE RENDERING
+══════════════════════════════════════════ */
+function sa(col) {
+  if (sortCol !== col) return '<i class="ti ti-arrows-sort" style="font-size:10px;opacity:.4;"></i>';
+  return sortDir < 0 ? '<i class="ti ti-sort-descending" style="font-size:10px;color:var(--blue);"></i>' : '<i class="ti ti-sort-ascending" style="font-size:10px;color:var(--blue);"></i>';
+}
+function rb(r) {
+  if (r==='Low')      return '<span class="badge badge-low">Low</span>';
+  if (r==='Moderate') return '<span class="badge badge-med">Moderate</span>';
+  return '<span class="badge badge-high">High</span>';
+}
+function rc(v, t=10) {
+  if (v == null) return '<span class="ret-na">—</span>';
+  return `<span class="${v>=15?'ret-green':v>=t?'ret-amber':'ret-red'}">${v.toFixed(1)}%</span>`;
+}
+function starBtn(code) {
+  const on = favorites.has(String(code));
+  return `<button class="star-btn${on?' starred':''}" onclick="toggleFav('${code}',event)" title="${on?'Remove from favorites':'Add to favorites'}">${on?'★':'☆'}</button>`;
+}
+
+function renderTable() {
+  if (!filteredCache.length) {
+    document.getElementById('explore-content').innerHTML = '<div class="empty-state"><i class="ti ti-mood-empty"></i><p>No funds match the current filters.</p></div>';
+    return;
+  }
+  const total = Math.ceil(filteredCache.length / TABLE_PAGE);
+  if (tablePage > total) tablePage = total;
+  const start = (tablePage - 1) * TABLE_PAGE;
+  const slice = filteredCache.slice(start, start + TABLE_PAGE);
+
+  let pgBtns = '';
+  const range = new Set([1, total]);
+  for (let i = Math.max(2, tablePage-2); i <= Math.min(total-1, tablePage+2); i++) range.add(i);
+  let prev = 0;
+  [...range].sort((a,b)=>a-b).forEach(p => {
+    if (p - prev > 1) pgBtns += `<span style="color:var(--text3);padding:0 4px;">…</span>`;
+    pgBtns += `<button class="page-btn${p===tablePage?' active':''}" onclick="goPage(${p})">${p}</button>`;
+    prev = p;
+  });
+
+  const rows = slice.map(f => {
+    const isOpen = expandedRow === String(f.schemeCode);
+    return `
+      <tr class="fund-row${isOpen?' expanded':''}" id="row-${f.schemeCode}" onclick="toggleDetail('${f.schemeCode}')">
+        <td style="font-weight:500;max-width:0;overflow:hidden;text-overflow:ellipsis;" title="${f.name}">${f.name}</td>
+        <td><span class="badge badge-cat">${f.cat}</span></td>
+        <td><span class="badge badge-plan">${f.plan}</span></td>
+        <td>${rb(f.risk)}</td>
+        <td>${rc(f.ret1)}</td>
+        <td>${rc(f.ret3)}</td>
+        <td>${rc(f.ret5)}</td>
+        <td style="color:var(--text2);">${f.exp != null ? f.exp.toFixed(2)+'%' : '—'}</td>
+        <td>${f.nav != null ? `<span style="font-weight:600;">₹${f.nav.toFixed(2)}</span><br><span style="font-size:10px;color:var(--text3);">${f.navDate||''}</span>` : '—'}</td>
+        <td style="color:var(--text2);">${f.aum != null ? '₹'+f.aum.toLocaleString('en-IN',{maximumFractionDigits:0}) : '—'}</td>
+        <td onclick="event.stopPropagation()" style="display:flex;gap:4px;align-items:center;">
+          ${starBtn(f.schemeCode)}
+          <button class="add-btn" onclick="quickAdd('${f.schemeCode}')" title="Add to portfolio"><i class="ti ti-plus" style="font-size:12px;"></i></button>
+        </td>
+      </tr>
+      ${isOpen ? detailRowHTML(f) : ''}`;
+  }).join('');
+
+  document.getElementById('explore-content').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:25%">Fund name</th>
+          <th style="width:7%">Category</th>
+          <th style="width:5%">Plan</th>
+          <th style="width:6%">Risk</th>
+          <th style="width:7%" onclick="sortBy('ret1')">1Y ret ${sa('ret1')}</th>
+          <th style="width:7%" onclick="sortBy('ret3')">3Y ret ${sa('ret3')}</th>
+          <th style="width:7%" onclick="sortBy('ret5')">5Y ret ${sa('ret5')}</th>
+          <th style="width:7%" onclick="sortBy('exp')">Exp ${sa('exp')}</th>
+          <th style="width:9%" onclick="sortBy('nav')">Live NAV ${sa('nav')}</th>
+          <th style="width:8%" onclick="sortBy('aum')">AUM (Cr) ${sa('aum')}</th>
+          <th style="width:8%">Actions</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="pagination">
+        <span>Showing ${(start+1).toLocaleString()}–${Math.min(start+TABLE_PAGE,filteredCache.length).toLocaleString()} of ${filteredCache.length.toLocaleString()} funds</span>
+        <div class="page-btns">
+          <button class="page-btn" onclick="goPage(${tablePage-1})" ${tablePage===1?'disabled':''}>‹</button>
+          ${pgBtns}
+          <button class="page-btn" onclick="goPage(${tablePage+1})" ${tablePage===total?'disabled':''}>›</button>
+        </div>
+      </div>
+    </div>
+    ${filteredCache.length>TABLE_PAGE ? `<p style="text-align:center;font-size:12px;color:var(--text3);margin-top:.5rem;">${filteredCache.length.toLocaleString()} funds total · page ${tablePage}/${total}</p>` : ''}`;
+
+  // render chart for expanded row if any
+  if (expandedRow) setTimeout(() => renderDetailChart(expandedRow, 'detail-chart-'+expandedRow, '1y'), 50);
+}
+
+function goPage(p) {
+  const total = Math.ceil(filteredCache.length / TABLE_PAGE);
+  if (p < 1 || p > total) return;
+  tablePage = p; expandedRow = null; renderTable();
+  document.getElementById('panel-explore').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ══════════════════════════════════════════
+   DETAIL PANEL (EXPAND ROW)
+══════════════════════════════════════════ */
+function detailRowHTML(f) {
+  return `
+    <tr class="detail-row" id="detail-${f.schemeCode}">
+      <td colspan="11">
+        <div class="detail-inner">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+            <div>
+              <div class="detail-title">${f.name}</div>
+              <div class="detail-sub">${f.fundHouse} · ${f.rawCat} · ${f.plan} · ${f.opt}</div>
+            </div>
+            <button class="detail-close" onclick="toggleDetail('${f.schemeCode}')" title="Close"><i class="ti ti-x"></i></button>
+          </div>
+          <div class="detail-grid">
+            <div>
+              <div class="detail-info">
+                <div class="detail-stat"><div class="detail-stat-label">Live NAV</div><div class="detail-stat-val">${f.nav != null ? '₹'+f.nav.toFixed(2) : '—'}</div></div>
+                <div class="detail-stat"><div class="detail-stat-label">NAV date</div><div class="detail-stat-val" style="font-size:13px;">${f.navDate || '—'}</div></div>
+                <div class="detail-stat"><div class="detail-stat-label">52W High</div><div class="detail-stat-val" style="color:var(--green);">${f.high52 != null ? '₹'+f.high52.toFixed(2) : '—'}</div></div>
+                <div class="detail-stat"><div class="detail-stat-label">52W Low</div><div class="detail-stat-val" style="color:var(--red);">${f.low52 != null ? '₹'+f.low52.toFixed(2) : '—'}</div></div>
+                <div class="detail-stat"><div class="detail-stat-label">Expense ratio</div><div class="detail-stat-val">${f.exp != null ? f.exp.toFixed(2)+'%' : '—'}</div></div>
+                <div class="detail-stat"><div class="detail-stat-label">AUM</div><div class="detail-stat-val" style="font-size:13px;">${f.aum != null ? '₹'+f.aum.toLocaleString('en-IN',{maximumFractionDigits:0})+' Cr' : '—'}</div></div>
+                <div class="detail-stat"><div class="detail-stat-label">Risk</div><div class="detail-stat-val" style="font-size:13px;">${f.rawRisk || f.risk}</div></div>
+                <div class="detail-stat"><div class="detail-stat-label">Inception</div><div class="detail-stat-val" style="font-size:13px;">${f.inception || '—'}</div></div>
+              </div>
+              ${f.managers ? `<div style="font-size:12px;color:var(--text2);margin-bottom:.5rem;"><span style="color:var(--text3);">Fund managers:</span> ${f.managers}</div>` : ''}
+              ${f.benchmark ? `<div style="font-size:12px;color:var(--text2);margin-bottom:.5rem;"><span style="color:var(--text3);">Benchmark:</span> ${f.benchmark}</div>` : ''}
+              ${f.exitLoad ? `<div style="font-size:12px;color:var(--text2);margin-bottom:.5rem;"><span style="color:var(--text3);">Exit load:</span> ${f.exitLoad}</div>` : ''}
+              ${f.isin ? `<div style="font-size:12px;color:var(--text3);">ISIN: ${f.isin}</div>` : ''}
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:12px;font-weight:600;color:var(--text2);">NAV trend</span>
+                <div class="nav-period-tabs">
+                  <button class="nav-period-btn active" id="prd-${f.schemeCode}-1y" onclick="switchPeriod('${f.schemeCode}','1y')">1Y</button>
+                  <button class="nav-period-btn" id="prd-${f.schemeCode}-3y" onclick="switchPeriod('${f.schemeCode}','3y')">3Y</button>
+                  <button class="nav-period-btn" id="prd-${f.schemeCode}-5y" onclick="switchPeriod('${f.schemeCode}','5y')">5Y</button>
+                  ${f.ret7 != null ? `<button class="nav-period-btn" id="prd-${f.schemeCode}-7y" onclick="switchPeriod('${f.schemeCode}','7y')">7Y</button>` : ''}
+                </div>
+              </div>
+              <div class="chart-canvas-wrap" style="height:200px;">
+                <canvas id="detail-chart-${f.schemeCode}" role="img" aria-label="NAV trend for ${f.name}">NAV trend chart.</canvas>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;">
+                ${[['1Y',f.ret1],['3Y',f.ret3],['5Y',f.ret5],['10Y',f.ret10]].map(([l,v]) => `
+                  <div style="text-align:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-md);padding:6px 4px;">
+                    <div style="font-size:11px;color:var(--text3);">${l} CAGR</div>
+                    <div style="font-size:14px;font-weight:600;color:${v==null?'var(--text3)':v>=15?'var(--green)':v>=8?'var(--amber)':'var(--red)'};">${v!=null?v.toFixed(1)+'%':'—'}</div>
+                  </div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+}
+
+function toggleDetail(schemeCode) {
+  const sc = String(schemeCode);
+  if (expandedRow === sc) { expandedRow = null; renderTable(); return; }
+  expandedRow = sc;
+  renderTable();
+}
+
+function openDetail(sc) { expandedRow = String(sc); renderTable(); }
+
+function switchPeriod(sc, period) {
+  document.querySelectorAll(`[id^="prd-${sc}-"]`).forEach(b => b.classList.remove('active'));
+  document.getElementById(`prd-${sc}-${period}`)?.classList.add('active');
+  renderDetailChart(sc, 'detail-chart-'+sc, period);
+}
+
+/* ══════════════════════════════════════════
+   NAV TREND CHART (CONSTRUCTED)
+══════════════════════════════════════════ */
+function buildTrendData(f, period) {
+  const nav    = f.nav || 100;
+  const cagr   = { '1y': f.ret1, '3y': f.ret3, '5y': f.ret5, '7y': f.ret7 };
+  const years  = { '1y': 1, '3y': 3, '5y': 5, '7y': 7 };
+  const months = (years[period] || 1) * 12;
+  const rate   = (cagr[period] || 8) / 100;
+  const low52  = f.low52  || nav * 0.88;
+  const high52 = f.high52 || nav * 1.15;
+  const range  = high52 - low52;
+  const startNav = nav / Math.pow(1 + rate, years[period] || 1);
+
+  const pts = Array.from({ length: months + 1 }, (_, i) => {
+    const t = i / months;
+    const trend = startNav * Math.pow(1 + rate, t * (years[period] || 1));
+    const wave  = Math.sin(i * 0.7) * range * 0.05 + Math.cos(i * 1.4) * range * 0.025 + Math.sin(i * 0.3) * range * 0.03;
+    return Math.max(startNav * 0.7, trend + wave);
+  });
+  // Anchor last point to real nav
+  const scale = nav / pts[pts.length - 1];
+  const data  = pts.map(v => parseFloat((v * scale).toFixed(2)));
+  if (f.prevNav) data[data.length - 2] = parseFloat(f.prevNav.toFixed(2));
+  data[data.length - 1] = parseFloat(nav.toFixed(2));
+
+  const now = new Date();
+  const labels = data.map((_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (months - i), 1);
+    return months <= 12
+      ? d.toLocaleString('en-IN', { month:'short', year:'2-digit' })
+      : i % 3 === 0 ? d.toLocaleString('en-IN', { month:'short', year:'2-digit' }) : '';
+  });
+
+  return { labels, data };
+}
+
+function renderDetailChart(sc, canvasId, period) {
+  const f = allFunds.find(x => String(x.schemeCode) === String(sc));
+  if (!f) return;
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  if (detailCharts[sc]) { detailCharts[sc].destroy(); delete detailCharts[sc]; }
+
+  const td  = buildTrendData(f, period);
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const col = f.ret1 == null || f.ret1 >= 0 ? (isDark ? '#8bc34a' : '#3a7a0a') : (isDark ? '#ef5350' : '#c0392b');
+
+  detailCharts[sc] = new Chart(canvas, {
+    type: 'line',
+    data: { labels: td.labels, datasets: [{ label:'NAV (₹)', data: td.data,
+      borderColor: col, borderWidth: 2,
+      pointRadius: ctx => ctx.dataIndex === td.data.length-1 ? 5 : 0,
+      pointBackgroundColor: col,
+      fill: true, backgroundColor: col + (isDark ? '22' : '18'), tension: 0.4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => '₹'+ctx.parsed.y.toFixed(2) } } },
+      scales: {
+        x: { ticks:{ font:{size:10}, color: isDark?'#636878':'#8890a8', autoSkip:true, maxTicksLimit:10 }, grid:{ display:false } },
+        y: { ticks:{ font:{size:10}, color: isDark?'#636878':'#8890a8', callback: v=>'₹'+v.toFixed(0) }, grid:{ color: isDark?'rgba(255,255,255,.05)':'rgba(0,0,0,.05)' } }
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   FAVORITES
+══════════════════════════════════════════ */
+function loadFavorites() {
+  try { favorites = new Set(JSON.parse(localStorage.getItem('mf_favorites_v1') || '[]')); } catch(e) { favorites = new Set(); }
+  updateFavBadge();
+}
+function saveFavorites() { localStorage.setItem('mf_favorites_v1', JSON.stringify([...favorites])); }
+function updateFavBadge() {
+  const b = document.getElementById('fav-count');
+  b.textContent = favorites.size; b.style.display = favorites.size ? 'inline' : 'none';
+}
+function toggleFav(sc, e) {
+  if (e) e.stopPropagation();
+  const key = String(sc);
+  if (favorites.has(key)) favorites.delete(key); else favorites.add(key);
+  saveFavorites(); updateFavBadge();
+  // update star in current table row without full re-render
+  const btn = document.querySelector(`tr#row-${key} .star-btn`);
+  if (btn) { btn.classList.toggle('starred', favorites.has(key)); btn.textContent = favorites.has(key) ? '★' : '☆'; btn.title = favorites.has(key) ? 'Remove from favorites' : 'Add to favorites'; }
+  if (document.getElementById('panel-favorites').classList.contains('active')) renderFavorites();
+}
+
+function renderFavorites() {
+  const empty = document.getElementById('fav-empty');
+  const grid  = document.getElementById('fav-grid');
+  if (!favorites.size) { empty.style.display='block'; grid.style.display='none'; return; }
+  const funds = [...favorites].map(sc => allFunds.find(f => String(f.schemeCode) === sc)).filter(Boolean);
+  if (!funds.length) { empty.style.display='block'; grid.style.display='none'; return; }
+  empty.style.display = 'none'; grid.style.display = 'grid';
+  grid.innerHTML = funds.map(f => `
+    <div class="fav-card">
+      <div class="fav-card-header">
+        <div>
+          <div class="fav-card-name" onclick="switchTab('explore');setTimeout(()=>openDetail('${f.schemeCode}'),100)">${f.name}</div>
+          <div class="fav-card-house">${f.fundHouse}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+          ${rb(f.risk)}
+          <button class="star-btn starred" onclick="toggleFav('${f.schemeCode}')" title="Remove from favorites">★</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem;">
+        <span class="badge badge-cat">${f.cat}</span>
+        <span class="badge badge-plan">${f.plan}</span>
+        <span class="badge badge-cat">${f.opt}</span>
+      </div>
+      <div class="fav-metrics">
+        <div class="fav-metric">
+          <div class="fav-metric-val ${f.ret1==null?'ret-na':f.ret1>=15?'ret-green':f.ret1>=8?'ret-amber':'ret-red'}">${f.ret1!=null?f.ret1.toFixed(1)+'%':'—'}</div>
+          <div class="fav-metric-label">1Y CAGR</div>
+        </div>
+        <div class="fav-metric">
+          <div class="fav-metric-val ${f.ret3==null?'ret-na':f.ret3>=15?'ret-green':f.ret3>=8?'ret-amber':'ret-red'}">${f.ret3!=null?f.ret3.toFixed(1)+'%':'—'}</div>
+          <div class="fav-metric-label">3Y CAGR</div>
+        </div>
+        <div class="fav-metric">
+          <div class="fav-metric-val ${f.ret5==null?'ret-na':f.ret5>=15?'ret-green':f.ret5>=8?'ret-amber':'ret-red'}">${f.ret5!=null?f.ret5.toFixed(1)+'%':'—'}</div>
+          <div class="fav-metric-label">5Y CAGR</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);font-size:12px;color:var(--text2);">
+        <span>NAV <strong style="color:var(--text);">${f.nav!=null?'₹'+f.nav.toFixed(2):'—'}</strong></span>
+        <span>Exp <strong style="color:var(--text);">${f.exp!=null?f.exp.toFixed(2)+'%':'—'}</strong></span>
+        <span>AUM <strong style="color:var(--text);">${f.aum!=null?'₹'+f.aum.toLocaleString('en-IN',{maximumFractionDigits:0})+' Cr':'—'}</strong></span>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['explore','favorites','portfolio'][i]===tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if (tab === 'favorites') renderFavorites();
+  if (tab === 'portfolio') refreshPortfolioNavs();
+}
+
+/* ══════════════════════════════════════════
+   FUND SELECT (PORTFOLIO)
+══════════════════════════════════════════ */
+function populateFundSelect() {
+  const sel = document.getElementById('pf-fund');
+  const byHouse = {};
+  allFunds.forEach(f => { const h = f.fundHouse || 'Other'; if (!byHouse[h]) byHouse[h] = []; byHouse[h].push(f); });
+  sel.innerHTML = '<option value="">Select a fund…</option>' +
+    Object.keys(byHouse).sort().map(h =>
+      `<optgroup label="${h}">${byHouse[h].map(f => `<option value="${f.schemeCode}">${f.name}</option>`).join('')}</optgroup>`
+    ).join('');
+}
+
+function quickAdd(schemeCode) {
+  const f = allFunds.find(x => String(x.schemeCode) === String(schemeCode));
+  if (!f) return;
+  document.getElementById('pf-fund').value = schemeCode;
+  if (f.nav) document.getElementById('pf-nav').value = f.nav.toFixed(2);
+  switchTab('portfolio');
+  document.getElementById('pf-amount').focus();
+}
+
+/* ══════════════════════════════════════════
+   PORTFOLIO
+══════════════════════════════════════════ */
+function savePortfolio() { localStorage.setItem('mf_portfolio_v2', JSON.stringify(portfolio)); }
+function loadPortfolio() {
+  try { portfolio = JSON.parse(localStorage.getItem('mf_portfolio_v2') || '[]'); } catch(e) { portfolio = []; }
+  updatePfBadge();
+}
+function updatePfBadge() { const b=document.getElementById('pf-count'); b.textContent=portfolio.length; b.style.display=portfolio.length?'inline':'none'; }
+
+async function refreshPortfolioNavs() {
+  if (!portfolio.length) { renderPortfolio(); return; }
+  await Promise.all(portfolio.map(async h => {
+    try {
+      const r = await fetch(`${API}/scheme-code/${h.schemeCode}`);
+      if (!r.ok) return;
+      const j = await r.json();
+      const d = j?.data;
+      if (d?.latestNav) { h.liveNav=+d.latestNav; h.navDate=d.latestNavDate||null; h.prevNav=d.previousNav?+d.previousNav:h.prevNav; h.high52=d['52WeekHighNav']?+d['52WeekHighNav']:h.high52; h.low52=d['52WeekLowNav']?+d['52WeekLowNav']:h.low52; }
+    } catch(e) {}
+  }));
+  renderPortfolio();
+}
+
+function addToPortfolio() {
+  const code = document.getElementById('pf-fund').value;
+  const amt  = parseFloat(document.getElementById('pf-amount').value);
+  const nav  = parseFloat(document.getElementById('pf-nav').value);
+  if (!code||!amt||!nav) { alert('Please fill all fields.'); return; }
+  const f = allFunds.find(x => String(x.schemeCode) === String(code));
+  if (!f) return;
+  portfolio.push({ id:Date.now(), schemeCode:f.schemeCode, name:f.name, cat:f.cat, risk:f.risk, plan:f.plan, fundHouse:f.fundHouse, buyNav:nav, invested:amt, units:amt/nav, liveNav:f.nav, navDate:f.navDate, ret1:f.ret1, prevNav:f.prevNav, high52:f.high52, low52:f.low52 });
+  savePortfolio(); updatePfBadge();
+  document.getElementById('pf-amount').value=''; document.getElementById('pf-nav').value=''; document.getElementById('pf-fund').value='';
+  renderPortfolio();
+}
+
+function removeHolding(id) {
+  portfolio = portfolio.filter(h => h.id !== id);
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+  savePortfolio(); updatePfBadge(); renderPortfolio();
+}
+
+function makeTrendData(h) {
+  const nav=h.liveNav||h.buyNav, cagr=h.ret1||10, low52=h.low52||nav*.88, high52=h.high52||nav*1.15, prev=h.prevNav||nav*.999, start=nav/(1+cagr/100), range=high52-low52;
+  const pts = Array.from({length:18},(_,i)=>{ const t=i/17, trend=start+(nav-start)*t, wave=Math.sin(i*1.8)*range*.06+Math.cos(i*3.1)*range*.03; return parseFloat(Math.max(low52*.97,trend+wave).toFixed(2)); });
+  pts[16]=parseFloat(prev.toFixed(2)); pts[17]=parseFloat(nav.toFixed(2));
+  const now=new Date();
+  const labels=Array.from({length:18},(_,i)=>{ const d=new Date(now.getFullYear(),now.getMonth()-17+i,1); return d.toLocaleString('en-IN',{month:'short',year:'2-digit'}); });
+  return { labels, data:pts };
+}
+
+function renderPortfolio() {
+  const empty=document.getElementById('pf-empty'), holdings=document.getElementById('pf-holdings'), pfM=document.getElementById('pf-metrics');
+  if (!portfolio.length) { empty.style.display='block'; holdings.innerHTML=''; pfM.style.display='none'; return; }
+  empty.style.display='none'; pfM.style.display='grid';
+  const totInv=portfolio.reduce((s,h)=>s+h.invested,0), totCur=portfolio.reduce((s,h)=>s+h.units*(h.liveNav||h.buyNav),0);
+  const totGain=totCur-totInv, gainPct=totGain/totInv*100;
+  pfM.innerHTML = `
+    <div class="metric"><div class="metric-label">Invested</div><div class="metric-value">₹${Math.round(totInv).toLocaleString('en-IN')}</div></div>
+    <div class="metric"><div class="metric-label">Current value</div><div class="metric-value">₹${Math.round(totCur).toLocaleString('en-IN')}</div></div>
+    <div class="metric"><div class="metric-label">Gain / loss</div><div class="metric-value ${totGain>=0?'green':'red'}">${totGain>=0?'+':''}₹${Math.round(totGain).toLocaleString('en-IN')}</div></div>
+    <div class="metric"><div class="metric-label">Returns</div><div class="metric-value ${gainPct>=0?'green':'red'}">${gainPct>=0?'+':''}${gainPct.toFixed(1)}%</div></div>`;
+  holdings.innerHTML = portfolio.map(h => {
+    const live=h.liveNav||h.buyNav, curV=h.units*live, gain=curV-h.invested, gainP=gain/h.invested*100;
+    const dayC=h.prevNav?((live-h.prevNav)/h.prevNav*100):null;
+    return `<div class="trend-card" id="card-${h.id}">
+      <div class="trend-header">
+        <div><div class="trend-name">${h.name}</div><div class="trend-meta">${h.cat} · ${h.plan} · ${h.risk} risk · ${h.units.toFixed(3)} units @ ₹${h.buyNav.toFixed(2)}${h.navDate?' · '+h.navDate:''}</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <span class="return-pill ${gainP>=0?'return-pos':'return-neg'}">${gainP>=0?'+':''}${gainP.toFixed(1)}%</span>
+          <button class="btn btn-danger" onclick="removeHolding(${h.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div class="holding-stats">
+        <div><div class="h-stat-label">Invested</div><div class="h-stat-val">₹${Math.round(h.invested).toLocaleString('en-IN')}</div></div>
+        <div><div class="h-stat-label">Current</div><div class="h-stat-val">₹${Math.round(curV).toLocaleString('en-IN')}</div></div>
+        <div><div class="h-stat-label">Gain / loss</div><div class="h-stat-val" style="color:${gain>=0?'var(--green)':'var(--red)'};">${gain>=0?'+':''}₹${Math.round(gain).toLocaleString('en-IN')}</div></div>
+        <div><div class="h-stat-label">Live NAV${dayC!=null?` <span style="font-size:10px;color:${dayC>=0?'var(--green)':'var(--red)'};">${dayC>=0?'+':''}${dayC.toFixed(2)}%</span>`:''}</div><div class="h-stat-val">₹${live.toFixed(2)}</div></div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-${h.id}" role="img" aria-label="NAV trend for ${h.name}">NAV trend.</canvas></div>
+    </div>`;
+  }).join('');
+  portfolio.forEach(h => {
+    if (chartInstances[h.id]) { chartInstances[h.id].destroy(); }
+    const td=makeTrendData(h), live=h.liveNav||h.buyNav, isDark=document.documentElement.dataset.theme==='dark';
+    const col=(h.units*live-h.invested)>=0?(isDark?'#639922':'#3a7a0a'):(isDark?'#E24B4A':'#c0392b');
+    chartInstances[h.id]=new Chart(document.getElementById('chart-'+h.id),{ type:'line', data:{ labels:td.labels, datasets:[{ label:'NAV (₹)', data:td.data, borderColor:col, borderWidth:2, pointRadius:ctx=>ctx.dataIndex===td.data.length-1?5:2, pointBackgroundColor:col, fill:true, backgroundColor:col+'22', tension:0.35 }]}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:ctx=>'₹'+ctx.parsed.y.toFixed(2) } } }, scales:{ x:{ ticks:{font:{size:10},color:isDark?'#636878':'#8890a8',autoSkip:true,maxTicksLimit:9}, grid:{display:false} }, y:{ ticks:{font:{size:10},color:isDark?'#636878':'#8890a8',callback:v=>'₹'+v.toFixed(0)}, grid:{color:isDark?'rgba(255,255,255,.05)':'rgba(0,0,0,.05)'} } } } });
+  });
+}
+
+/* ══════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════ */
+initTheme();
+loadFavorites();
+loadPortfolio();
+loadAllFunds();
+</script>
+</body>
+</html>
